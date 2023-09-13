@@ -9,6 +9,9 @@ A simple operating system written in Rust.
     - [Ubuntu](#ubuntu)
   - [Windows](#windows)
 - [Run](#run)
+- [OS dev resources](#os-dev-resources)
+  - [General](#general)
+  - [Bootloader](#bootloader)
 
 # Setup
 
@@ -34,3 +37,13 @@ This will build the kernel, create an image and launch it with qemu.
 ```
 cargo run
 ```
+
+# OS dev resources
+**General**
+- [Writing an OS in Rust](https://os.phil-opp.com/)
+- [OSDev Wiki](https://wiki.osdev.org/Main_Page)
+- [GitHub rust-osdev/bootloader](https://github.com/rust-osdev/bootloader/blob/main/common/src/framebuffer.rs)
+
+**Bootloader**
+- [Writing a boot loader in Assembly and C](https://www.codeproject.com/Articles/664165/Writing-a-boot-loader-in-Assembly-and-C-Part)
+- [How to develop your own Boot Loader](https://www.codeproject.com/Articles/36907/How-to-develop-your-own-Boot-Loader)
