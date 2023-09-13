@@ -2,6 +2,7 @@
 A simple operating system written in Rust.
 
 **TOC**
+- [CosmOS](#cosmos)
 - [Setup](#setup)
   - [Linux](#linux)
     - [Arch](#arch)
@@ -11,11 +12,7 @@ A simple operating system written in Rust.
 
 # Setup
 
-1. Install bootimage
-    ```
-    cargo install bootimage
-    ```
-2. Install QEMU (see below)
+1. Install QEMU (see below)
 
 ## Linux
 
@@ -33,7 +30,7 @@ apt install qemu-system-x86
 Install QEMU from [here](https://www.qemu.org/download/#windows)
 
 # Run
-This will build the kernel, link it and launch qemu.
+This will build the kernel, create an image and launch it with qemu.
 ```
 cargo run
 ```
