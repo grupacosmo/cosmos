@@ -1,12 +1,10 @@
 # CosmOS
 
-## Setup
-```
-rustup target add x86_64-unknown-none
-```
+## Prerequisites
+- [qemu](https://www.qemu.org/download/#linux)
 
 ## Run
-This will build the kernel, link it and launch qemu.
+This will build the kernel, create an image and launch it with qemu.
 ```
 cargo run
 ```
