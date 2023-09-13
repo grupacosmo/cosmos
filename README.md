@@ -2,7 +2,7 @@
 
 ## Setup
 ```
-cargo install bootimage
+rustup target add x86_64-unknown-none
 ```
 
 ## Run

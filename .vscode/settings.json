@@ -1,6 +1,6 @@
 {
     "rust-analyzer.check.allTargets": false,
     "rust-analyzer.check.extraArgs": [
-        "--target=x86_64-cosmos.json",
+        "--target=x86_64-unknown-none",
     ]
 }

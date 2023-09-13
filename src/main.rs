@@ -1,29 +1,13 @@
-#![no_std]
-#![no_main]
+fn main() -> eyre::Result<()> {
+    // read env variables that were set in build script
+    let bios_path = env!("BIOS_PATH");
+    println!("{bios_path}");
 
-use core::{panic::PanicInfo, slice};
+    std::process::Command::new("qemu-system-x86_64")
+        .arg("-drive")
+        .arg(format!("format=raw,file={bios_path}"))
+        .spawn()?
+        .wait()?;
 
-mod color {
-    pub const CYAN: u8 = 0xb;
-}
-
-const VGA_BUFFER_ADDRESS: usize = 0xb8000;
-const VGA_BUFFER_LEN: usize = 20 * 80;
-
-#[no_mangle]
-pub extern "C" fn _start() -> ! {
-    let vga_buffer =
-        unsafe { slice::from_raw_parts_mut(VGA_BUFFER_ADDRESS as *mut u8, VGA_BUFFER_LEN) };
-
-    for (i, &byte) in b"Hello World!".iter().enumerate() {
-        vga_buffer[i * 2] = byte;
-        vga_buffer[i * 2 + 1] = color::CYAN;
-    }
-
-    loop {}
-}
-
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
+    Ok(())
 }
