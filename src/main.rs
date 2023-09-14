@@ -1,7 +1,6 @@
 fn main() -> eyre::Result<()> {
     // read env variables that were set in build script
     let bios_path = env!("BIOS_PATH");
-    println!("{bios_path}");
 
     std::process::Command::new("qemu-system-x86_64")
         .arg("-drive")
