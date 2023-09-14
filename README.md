@@ -32,7 +32,6 @@ apt install qemu-system-x86
     rustup component add llvm-tools-preview 
     ```
 - Add qemu to PATH (example: `C:\Program Files\qemu`)  
-- Add bootloader to PATH (example: `...\cosmos\target\debug\build\bootloader-81b4f985c3fc6cb5\out\bin`)  
 
 # Run
 This will build the kernel, create an image and launch it with qemu.
