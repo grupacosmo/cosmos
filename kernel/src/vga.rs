@@ -37,9 +37,7 @@ impl<'a> Writer<'a> {
     }
 
     pub fn clear(&mut self) {
-        for b in self.buffer.iter_mut() {
-            *b = 0x00;
-        }
+        self.buffer.fill(0x00);
     }
 
     pub fn write_pixel(&mut self, x: usize, y: usize, color: Color) {
