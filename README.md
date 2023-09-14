@@ -1,13 +1,10 @@
 # CosmOS
 A simple operating system written in Rust.
 
-**TOC**
+# Table of Contents
 - [CosmOS](#cosmos)
 - [Setup](#setup)
-  - [Linux](#linux)
-    - [Arch](#arch)
-    - [Ubuntu](#ubuntu)
-  - [Windows](#windows)
+  - [QEMU](#qemu)
 - [Run](#run)
 
 # Setup
