@@ -42,7 +42,7 @@ cargo run
 **General**
 - [Writing an OS in Rust](https://os.phil-opp.com/)
 - [OSDev Wiki](https://wiki.osdev.org/Main_Page)
-- [GitHub rust-osdev/bootloader](https://github.com/rust-osdev/bootloader/blob/main/common/src/framebuffer.rs)
+- [GitHub rust-osdev/bootloader](https://github.com/rust-osdev/bootloader)
 
 **Bootloader**
 - [Writing a boot loader in Assembly and C](https://www.codeproject.com/Articles/664165/Writing-a-boot-loader-in-Assembly-and-C-Part)
