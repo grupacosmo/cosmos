@@ -18,8 +18,8 @@ impl Color {
 
     /// Converts from RGB to grayscale using NTSC formula
     pub fn greyscale(self) -> u8 {
-        let Self { r, g, b } = self;
-        (0.299 * f32::from(r) + 0.587 * f32::from(g) + 0.114 * f32::from(b)) as u8
+        let (r, g, b) = (f32::from(self.r), f32::from(self.g), f32::from(self.b));
+        (0.299 * r + 0.587 * g + 0.114 * b) as u8
     }
 }
 
