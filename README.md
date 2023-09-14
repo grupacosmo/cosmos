@@ -8,7 +8,7 @@ A simple operating system written in Rust.
 - [Run](#run)
 
 # Setup
-## QEMU
+
 ### Linux
 
 #### Arch
@@ -22,8 +22,16 @@ apt install qemu-system-x86
 ```
 
 ### Windows
-1. Install QEMU from [here](https://qemu.weilnetz.de/w64/)
-2. Add qemu installation directory to PATH
+- Install QEMU from [here](https://qemu.weilnetz.de/w64/)
+- Add toolchain 
+    ```
+    rustup component add rust-src --toolchain nightly-x86_64-pc-windows-msvc
+     ```
+- Install llvm 
+    ```
+    rustup component add llvm-tools-preview 
+    ```
+- Add qemu to PATH (example: `C:\Program Files\qemu`)  
 
 # Run
 This will build the kernel, create an image and launch it with qemu.
