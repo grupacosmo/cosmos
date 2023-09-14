@@ -10,11 +10,11 @@ pub struct Color {
 }
 
 impl Color {
-    pub const GREEN: Color = Color {
-        r: 0x00,
-        g: 0xFF,
-        b: 0x00,
-    };
+    pub const GREEN: Color = Color::new(0x00, 0xFF, 0x00);
+
+    pub const fn new(r: u8, g: u8, b: u8) -> Self {
+        Self { r, g, b }
+    }
 
     /// Converts from RGB to grayscale using NTSC formula
     pub fn greyscale(self) -> u8 {
@@ -23,6 +23,7 @@ impl Color {
     }
 }
 
+#[derive(Debug)]
 pub struct Writer<'a> {
     buffer: &'a mut [u8],
     info: FrameBufferInfo,
@@ -34,6 +35,14 @@ impl<'a> Writer<'a> {
             info: framebuffer.info(),
             buffer: framebuffer.buffer_mut(),
         }
+    }
+
+    pub fn width(&self) -> usize {
+        self.info.width
+    }
+
+    pub fn height(&self) -> usize {
+        self.info.height
     }
 
     pub fn clear(&mut self) {
