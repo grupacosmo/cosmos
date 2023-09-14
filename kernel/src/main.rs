@@ -13,7 +13,7 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
     let framebuffer = boot_info.framebuffer.as_mut().unwrap();
     let vga = vga::Writer::new(framebuffer);
 
-    logger::init_global(vga);    
+    logger::init_global(vga);
 
     // dupa driven development
     println!("dupa");
