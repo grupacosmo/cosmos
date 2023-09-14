@@ -48,6 +48,7 @@ impl<'a> Logger<'a> {
 
     pub fn newline(&mut self) {
         self.y += RASTER_HEIGHT.val();
+        self.x = 0;
     }
 
     pub fn clear(&mut self) {
