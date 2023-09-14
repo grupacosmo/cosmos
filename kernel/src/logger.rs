@@ -1,7 +1,7 @@
 use crate::vga;
-use noto_sans_mono_bitmap::{FontWeight, RasterHeight};
 use core::fmt;
-use spin::{Mutex, once::Once};
+use noto_sans_mono_bitmap::{FontWeight, RasterHeight};
+use spin::{once::Once, Mutex};
 
 const FONT_WEIGHT: FontWeight = FontWeight::Regular;
 const RASTER_HEIGHT: RasterHeight = RasterHeight::Size16;
