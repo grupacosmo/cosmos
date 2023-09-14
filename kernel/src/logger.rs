@@ -64,7 +64,7 @@ impl<'a> Logger<'a> {
         }
 
         if c == '\r' {
-            self.y += RASTER_HEIGHT.val();
+            self.x += 0;
             return;
         }
 
