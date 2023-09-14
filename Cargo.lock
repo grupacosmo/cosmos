@@ -482,7 +482,6 @@ version = "0.1.0"
 dependencies = [
  "bootloader_api",
  "noto-sans-mono-bitmap",
- "once_cell",
  "spin",
 ]
 
