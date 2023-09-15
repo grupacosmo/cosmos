@@ -3,6 +3,10 @@ name = "kernel"
 version = "0.1.0"
 edition = "2021"
 
+[[bin]]
+name = "kernel"
+test = false
+
 [dependencies]
 bootloader_api = "0.11.4"
 noto-sans-mono-bitmap = "0.2.0"
