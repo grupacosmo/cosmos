@@ -18,6 +18,10 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
     // dupa driven development
     println!("dupa");
 
+    for num in 0..50 {
+        println!("line {}", num)
+    }
+
     loop {}
 }
 
