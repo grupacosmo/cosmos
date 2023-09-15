@@ -68,4 +68,9 @@ impl<'a> Writer<'a> {
             .copy_from_slice(&color[..bytes_per_pixel]);
         let _ = unsafe { ptr::read_volatile(&self.buffer[byte_offset]) };
     }
+
+    pub fn shift_up(&mut self, npixels: usize) {
+        let offset = self.info.bytes_per_pixel * self.width() * npixels;
+        self.buffer.copy_within(offset.., 0);
+    }
 }

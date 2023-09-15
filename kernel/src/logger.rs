@@ -73,7 +73,8 @@ impl<'a> Logger<'a> {
         }
 
         if self.y + RASTER_HEIGHT.val() >= self.writer.height() {
-            self.clear()
+            self.y -= RASTER_HEIGHT.val();
+            self.writer.shift_up(RASTER_HEIGHT.val());
         }
 
         let rc = noto_sans_mono_bitmap::get_raster(c, FONT_WEIGHT, RASTER_HEIGHT).unwrap();
