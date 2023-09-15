@@ -72,7 +72,7 @@ impl<'a> Logger<'a> {
             self.newline();
         }
 
-        if self.y + RASTER_HEIGHT.val() >= self.writer.height() {
+        if self.y + RASTER_HEIGHT.val() > self.writer.height() {
             self.y -= RASTER_HEIGHT.val();
             self.writer.shift_up(RASTER_HEIGHT.val());
         }
