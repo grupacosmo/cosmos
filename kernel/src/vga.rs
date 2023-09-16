@@ -72,5 +72,7 @@ impl<'a> Writer<'a> {
     pub fn shift_up(&mut self, npixels: usize) {
         let offset = self.info.bytes_per_pixel * self.width() * npixels;
         self.buffer.copy_within(offset.., 0);
+        let len = self.buffer.len();
+        self.buffer[len - offset..].fill(0x00);
     }
 }

@@ -21,6 +21,7 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
     for num in 0..50 {
         println!("line {}", num)
     }
+    println!("end");
 
     loop {}
 }
