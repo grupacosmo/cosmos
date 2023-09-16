@@ -80,7 +80,7 @@ fn init_gdt() {
             // # Safety
             // This code can be called only once so there will be no data races
             let stack_start = VirtAddr::from_ptr(unsafe { &STACK });
-            // Return end address as stacks are filled from the end to the beggining
+            // Return end address as stacks are filled from the end to the beginning
             stack_start + STACK_SIZE
         };
         tss
