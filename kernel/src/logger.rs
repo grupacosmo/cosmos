@@ -21,7 +21,7 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    LOGGER.wait().lock().write_fmt(args).unwrap();
+    LOGGER.get().unwrap().lock().write_fmt(args).unwrap();
 }
 
 static LOGGER: Once<Mutex<Logger<'static>>> = Once::new();
