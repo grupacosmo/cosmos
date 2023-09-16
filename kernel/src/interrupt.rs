@@ -18,14 +18,18 @@ static SEGMENT_SELECTORS: Once<SegmentSelectors> = Once::new();
 
 const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 
-struct SegmentSelectors {
-    code_selector: gdt::SegmentSelector,
-    tss_selector: gdt::SegmentSelector,
-}
-
+/// Initialize interrupt handlers.
+///
+/// # Panics
+/// This function will panic if it is called more than once.
 pub fn init() {
     init_gdt();
     init_idt();
+}
+
+struct SegmentSelectors {
+    code_selector: gdt::SegmentSelector,
+    tss_selector: gdt::SegmentSelector,
 }
 
 /// Initialize the Interrupt Descriptor Table (IDT).
@@ -39,7 +43,7 @@ pub fn init() {
 ///
 /// # Panics
 /// This function will panic if it is called more than once.
-pub fn init_idt() {
+fn init_idt() {
     let idt = IDT.call_once(|| {
         let mut idt = InterruptDescriptorTable::new();
         idt.breakpoint.set_handler_fn(breakpoint_handler);
@@ -66,7 +70,7 @@ pub fn init_idt() {
 ///
 /// # Panics
 /// This function will panic if it is called more than once.
-pub fn init_gdt() {
+fn init_gdt() {
     let tss = TSS.call_once(|| {
         let mut tss = TaskStateSegment::new();
         tss.interrupt_stack_table[usize::from(DOUBLE_FAULT_IST_INDEX)] = {
