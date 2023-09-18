@@ -116,8 +116,8 @@ fn init_gdt() {
     // Above we ensure that the code and TSS selectors point to valid entries
     unsafe {
         // At this point the SS (stack segment) register contains selector with index 2,
-        // which is the index of TSS. You can call `println("{:?}", SS::get_reg());` to see this for
-        // yourself. Set it to 0 to avoid issues.
+        // which happens to be the index of TSS. Set it to 0 to avoid issues.
+        // You can call `println!("{:?}", (SS::get_reg(), selectors));` to see this for yourself.
         SS::set_reg(gdt::SegmentSelector::NULL);
         CS::set_reg(selectors.code_selector);
         tables::load_tss(selectors.tss_selector);
