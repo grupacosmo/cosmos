@@ -2,6 +2,20 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
+use bootloader_api::BootInfo;
+
 pub mod interrupt;
 pub mod logger;
 pub mod vga;
+
+pub use bootloader_api;
+pub use x86_64;
+
+pub fn init(boot_info: &'static mut BootInfo) {
+    interrupt::init();
+
+    let framebuffer = boot_info.framebuffer.as_mut().unwrap();
+    let vga = vga::Writer::new(framebuffer);
+
+    logger::init_global(vga);
+}

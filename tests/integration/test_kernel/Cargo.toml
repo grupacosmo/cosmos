@@ -1,0 +1,9 @@
+[package]
+name = "test_kernel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+kernel = { path = "../../../kernel" }
+uart_16550 = "0.3.0"
+heapless = { version = "0.7.16", default-features = false }
