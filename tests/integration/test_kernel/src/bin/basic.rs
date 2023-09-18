@@ -2,23 +2,18 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
-use bootloader_api::{entry_point, BootInfo};
-use core::panic::PanicInfo;
-use kernel::println;
+use test_kernel::prelude::*;
 
 entry_point!(main);
 
 fn main(boot_info: &'static mut BootInfo) -> ! {
     kernel::init(boot_info);
-
-    println!("it works");
-
-    #[allow(clippy::empty_loop)]
-    loop {}
+    exit_qemu(QemuExitCode::Success)
 }
 
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
-    println!("{info}");
-    loop {}
+    use core::fmt::Write;
+    writeln!(serial(), "{info}").unwrap();
+    exit_qemu(QemuExitCode::Failed);
 }
