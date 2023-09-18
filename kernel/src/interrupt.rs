@@ -2,7 +2,7 @@ use crate::println;
 use spin::once::Once;
 use x86_64::{
     instructions::tables,
-    registers::segmentation::{Segment as _, CS},
+    registers::segmentation::{Segment as _, CS, SS},
     structures::{
         gdt::{self, GlobalDescriptorTable},
         idt::{InterruptDescriptorTable, InterruptStackFrame},
@@ -10,6 +10,7 @@ use x86_64::{
     },
     VirtAddr,
 };
+use x86_64::structures::idt::PageFaultErrorCode;
 
 static IDT: Once<InterruptDescriptorTable> = Once::new();
 static TSS: Once<TaskStateSegment> = Once::new();
@@ -27,6 +28,7 @@ pub fn init() {
     init_idt();
 }
 
+#[derive(Debug)]
 struct SegmentSelectors {
     code_selector: gdt::SegmentSelector,
     tss_selector: gdt::SegmentSelector,
@@ -46,7 +48,16 @@ struct SegmentSelectors {
 fn init_idt() {
     let idt = IDT.call_once(|| {
         let mut idt = InterruptDescriptorTable::new();
+        idt.alignment_check.set_handler_fn(alignment_check_handler);
         idt.breakpoint.set_handler_fn(breakpoint_handler);
+        idt.bound_range_exceeded.set_handler_fn(bound_range_exceeded_handler);
+        idt.debug.set_handler_fn(debug_handler);
+        idt.invalid_tss.set_handler_fn(invalid_tss_handler);
+        idt.stack_segment_fault.set_handler_fn(stack_segment_fault_handler);
+        idt.page_fault.set_handler_fn(page_fault_handler);
+        idt.virtualization.set_handler_fn(virtualization_handler);
+        idt.vmm_communication_exception.set_handler_fn(vmm_communication_exception_handler);
+        idt.general_protection_fault.set_handler_fn(general_protection_fault_handler);
         // # Safety
         // `DOUBLE_FAULT_IST_INDEX` has a corresponding entry in IST and is not used by any other
         // interrupt handler
@@ -104,14 +115,55 @@ fn init_gdt() {
     // # Safety
     // Above we ensure that the code and TSS selectors point to valid entries
     unsafe {
+        // At this point the SS (stack segment) register contains selector with index 2,
+        // which is the index of TSS. You can call `println("{:?}", SS::get_reg());` to see this for
+        // yourself. Set it to 0 to avoid issues.
+        SS::set_reg(gdt::SegmentSelector::NULL);
         CS::set_reg(selectors.code_selector);
         tables::load_tss(selectors.tss_selector);
     }
 }
 
+
 extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
     // FIXME handle breakpoint
     println!("Exception: breakpoint\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn page_fault_handler(frame: InterruptStackFrame, _error_code: PageFaultErrorCode) {
+    panic!("Exception: page fault\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn invalid_tss_handler(frame: InterruptStackFrame, _error_code: u64) {
+    panic!("Exception: invalid tss\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn alignment_check_handler(frame: InterruptStackFrame, _error_code: u64) {
+    panic!("Exception: alignment check\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn bound_range_exceeded_handler(frame: InterruptStackFrame) {
+    panic!("Exception: bounds range exceeded\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn debug_handler(frame: InterruptStackFrame) {
+    panic!("Exception: debug\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn stack_segment_fault_handler(frame: InterruptStackFrame, _error_code: u64) {
+    panic!("Exception: stack segment fault\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn virtualization_handler(frame: InterruptStackFrame) {
+    panic!("Exception: virtualization\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn vmm_communication_exception_handler(frame: InterruptStackFrame, _error_code: u64) {
+    panic!("Exception: vmm communication exception\n{:#?}", frame)
+}
+
+extern "x86-interrupt" fn general_protection_fault_handler(frame: InterruptStackFrame, error_code: u64) {
+    panic!("Exception: general protection fault\nerror code: {error_code}\n{:#?}", frame)
 }
 
 extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _error_code: u64) -> ! {
