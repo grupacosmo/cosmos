@@ -14,6 +14,6 @@ fn main() {
         .create_disk_image(&bios_path)
         .unwrap();
 
-    // pass the disk image paths as env variables to the `basic.rs`
+    // pass the disk image paths as env variables to the `main.rs`
     println!("cargo:rustc-env=BIOS_PATH={}", bios_path.display());
 }
