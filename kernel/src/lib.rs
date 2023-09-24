@@ -18,4 +18,5 @@ pub fn init(boot_info: &'static mut BootInfo) {
     let vga = vga::Writer::new(framebuffer);
 
     logger::init_global(vga);
+    interrupt::enable_interrupts();
 }

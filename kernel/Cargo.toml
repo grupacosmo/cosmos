@@ -12,4 +12,6 @@ bootloader_api = "0.11.4"
 noto-sans-mono-bitmap = "0.2.0"
 spin = "0.9.8"
 x86_64 = "0.14.10"
+pic8259 = "0.10.4"
+pc-keyboard = "0.7.0"
 

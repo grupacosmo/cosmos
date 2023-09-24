@@ -1,7 +1,12 @@
-use crate::println;
+use crate::{print, println};
+use pc_keyboard::{HandleControl, Keyboard};
+use pic8259::ChainedPics;
 use spin::once::Once;
+use spin::Mutex;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{
+    instructions,
+    instructions::port::Port,
     instructions::tables,
     registers::segmentation::{Segment as _, CS, SS},
     structures::{
@@ -16,8 +21,16 @@ static IDT: Once<InterruptDescriptorTable> = Once::new();
 static TSS: Once<TaskStateSegment> = Once::new();
 static GDT: Once<GlobalDescriptorTable> = Once::new();
 static SEGMENT_SELECTORS: Once<SegmentSelectors> = Once::new();
+static PICS: Once<Mutex<ChainedPics>> = Once::new();
 
 const DOUBLE_FAULT_IST_INDEX: u16 = 0;
+
+// hardware interrupts PICs (slots 32-47)
+// Safety - ensure that the PICs does not overlap
+const PIC_1_OFFSET: u8 = 32;
+const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
+
+const PS2_CONTROLLER_PORT: u16 = 0x60;
 
 /// Initialize interrupt handlers.
 ///
@@ -26,6 +39,33 @@ const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 pub fn init() {
     init_gdt();
     init_idt();
+    init_pic();
+}
+
+/// Enable interrupts if they are not enabled.
+pub fn enable_interrupts() {
+    if !instructions::interrupts::are_enabled() {
+        instructions::interrupts::enable();
+    }
+}
+
+#[derive(Debug, Copy, Clone)]
+#[repr(u8)]
+pub enum InterruptIndex {
+    Timer = PIC_1_OFFSET,
+    Keyboard,
+}
+
+impl From<InterruptIndex> for u8 {
+    fn from(value: InterruptIndex) -> Self {
+        value as u8
+    }
+}
+
+impl From<InterruptIndex> for usize {
+    fn from(value: InterruptIndex) -> Self {
+        value as usize
+    }
 }
 
 #[derive(Debug)]
@@ -48,6 +88,8 @@ struct SegmentSelectors {
 fn init_idt() {
     let idt = IDT.call_once(|| {
         let mut idt = InterruptDescriptorTable::new();
+
+        // # exceptions
         idt.alignment_check.set_handler_fn(alignment_check_handler);
         idt.breakpoint.set_handler_fn(breakpoint_handler);
         idt.bound_range_exceeded
@@ -70,6 +112,11 @@ fn init_idt() {
                 .set_handler_fn(double_fault_handler)
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX);
         }
+
+        // # hardware interrupts
+        idt[InterruptIndex::Timer.into()].set_handler_fn(timer_interrupt_handler);
+        idt[InterruptIndex::Keyboard.into()].set_handler_fn(keyboard_interrupt_handler);
+
         idt
     });
     idt.load();
@@ -128,6 +175,30 @@ fn init_gdt() {
     }
 }
 
+/// Initialize Programmable Interrupt Controllers (PICs).
+///
+/// This functions setups the standard PIC 1 and PIC 2 controllers to properly handle hardware
+/// interrupts.
+///
+/// # Panics
+/// This function will panic if it is called more than once.
+fn init_pic() {
+    let pics = PICS.call_once(|| {
+        // # Safety
+        // we ensure that the PICs does not overlap and the offsets are correct
+        let chained_pics = unsafe { ChainedPics::new(PIC_1_OFFSET, PIC_2_OFFSET) };
+
+        Mutex::new(chained_pics)
+    });
+
+    // # Safety
+    // we ensure that the PICs are properly configured
+    unsafe {
+        pics.lock().initialize();
+    }
+}
+
+// Exception handlers
 extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
     // FIXME handle breakpoint
     println!("Exception: breakpoint\n{:#?}", frame)
@@ -187,4 +258,52 @@ extern "x86-interrupt" fn general_protection_fault_handler(
 extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _error_code: u64) -> ! {
     // FIXME handle double fault
     panic!("Exception: double fault\n{:#?}", frame);
+}
+
+// Hardware handlers
+extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    // print!(".");
+
+    // # Safety
+    // we use the same interrupt number as the handler is registered for
+    unsafe {
+        PICS.get()
+            .unwrap()
+            .lock()
+            .notify_end_of_interrupt(InterruptIndex::Timer.into());
+    }
+}
+
+// TODO PAT temporary
+static KEYBOARD: Mutex<Keyboard<pc_keyboard::layouts::Us104Key, pc_keyboard::ScancodeSet1>> =
+    Mutex::new(Keyboard::new(
+        pc_keyboard::ScancodeSet1::new(),
+        pc_keyboard::layouts::Us104Key,
+        HandleControl::Ignore,
+    ));
+
+extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+    // # Safety
+    // we read from the keyboard port only on keyboard interrupt
+    let scancode: u8 = unsafe { Port::new(PS2_CONTROLLER_PORT).read() };
+
+    // TODO PAT temporary
+    let mut keyboard = KEYBOARD.lock();
+    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
+        if let Some(key) = keyboard.process_keyevent(key_event) {
+            match key {
+                pc_keyboard::DecodedKey::Unicode(character) => print!("{}", character),
+                pc_keyboard::DecodedKey::RawKey(key) => print!("{:?}", key),
+            }
+        }
+    }
+
+    // # Safety
+    // we use the same interrupt number as the handler is registered for
+    unsafe {
+        PICS.get()
+            .unwrap()
+            .lock()
+            .notify_end_of_interrupt(InterruptIndex::Keyboard.into());
+    }
 }
