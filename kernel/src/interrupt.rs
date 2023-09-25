@@ -1,4 +1,6 @@
 use crate::{print, println};
+use core::fmt::Debug;
+use paste::paste;
 use pc_keyboard::{HandleControl, Keyboard};
 use pic8259::ChainedPics;
 use spin::once::Once;
@@ -17,11 +19,14 @@ use x86_64::{
     VirtAddr,
 };
 
+type SupportedKeyboard = Keyboard<pc_keyboard::layouts::Us104Key, pc_keyboard::ScancodeSet1>;
+
 static IDT: Once<InterruptDescriptorTable> = Once::new();
 static TSS: Once<TaskStateSegment> = Once::new();
 static GDT: Once<GlobalDescriptorTable> = Once::new();
 static SEGMENT_SELECTORS: Once<SegmentSelectors> = Once::new();
 static PICS: Once<Mutex<ChainedPics>> = Once::new();
+static KEYBOARD: Once<Mutex<SupportedKeyboard>> = Once::new();
 
 const DOUBLE_FAULT_IST_INDEX: u16 = 0;
 
@@ -31,6 +36,26 @@ const PIC_1_OFFSET: u8 = 32;
 const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 
 const PS2_CONTROLLER_PORT: u16 = 0x60;
+
+// idk, i just think it is important to ensure safety of this unsafe block with some rust magic
+/// Wraps handler in function that calls the handler and notifies the PICs about the interrupt end
+/// then adds the handler to the IDT.
+macro_rules! interrupt_handler {
+    ($idt:tt, $interrupt_index:path, $handler:ident) => {
+        paste! {
+            extern "x86-interrupt" fn [<$handler _wrapper>] (stack: InterruptStackFrame) {
+                $handler(stack);
+
+                // # Safety
+                // we use the same interrupt number as the handler is registered for
+                unsafe {
+                    PICS.get().unwrap().lock().notify_end_of_interrupt($interrupt_index.into());
+                }
+            }
+            $idt[$interrupt_index.into()].set_handler_fn([<$handler _wrapper>]);
+        }
+    };
+}
 
 /// Initialize interrupt handlers.
 ///
@@ -113,9 +138,8 @@ fn init_idt() {
                 .set_stack_index(DOUBLE_FAULT_IST_INDEX);
         }
 
-        // # hardware interrupts
-        idt[InterruptIndex::Timer.into()].set_handler_fn(timer_interrupt_handler);
-        idt[InterruptIndex::Keyboard.into()].set_handler_fn(keyboard_interrupt_handler);
+        interrupt_handler!(idt, InterruptIndex::Timer, timer_interrupt_handler);
+        interrupt_handler!(idt, InterruptIndex::Keyboard, keyboard_interrupt_handler);
 
         idt
     });
@@ -191,11 +215,26 @@ fn init_pic() {
         Mutex::new(chained_pics)
     });
 
+    // initialize keyboard before enabling interrupts
+    init_keyboard();
+
     // # Safety
     // we ensure that the PICs are properly configured
     unsafe {
         pics.lock().initialize();
     }
+}
+
+fn init_keyboard() {
+    KEYBOARD.call_once(|| {
+        let keyboard = Keyboard::new(
+            pc_keyboard::ScancodeSet1::new(),
+            pc_keyboard::layouts::Us104Key,
+            HandleControl::Ignore,
+        );
+
+        Mutex::new(keyboard)
+    });
 }
 
 // Exception handlers
@@ -260,50 +299,33 @@ extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _erro
     panic!("Exception: double fault\n{:#?}", frame);
 }
 
-// Hardware handlers
-extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
+// Hardware handlers - no need for x86-interrupt, already done by the macro at initialization
+fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
     // print!(".");
-
-    // # Safety
-    // we use the same interrupt number as the handler is registered for
-    unsafe {
-        PICS.get()
-            .unwrap()
-            .lock()
-            .notify_end_of_interrupt(InterruptIndex::Timer.into());
-    }
 }
 
-// TODO PAT temporary
-static KEYBOARD: Mutex<Keyboard<pc_keyboard::layouts::Us104Key, pc_keyboard::ScancodeSet1>> =
-    Mutex::new(Keyboard::new(
-        pc_keyboard::ScancodeSet1::new(),
-        pc_keyboard::layouts::Us104Key,
-        HandleControl::Ignore,
-    ));
-
-extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
+fn keyboard_interrupt_handler(_stack_frame: InterruptStackFrame) {
     // # Safety
     // we read from the keyboard port only on keyboard interrupt
     let scancode: u8 = unsafe { Port::new(PS2_CONTROLLER_PORT).read() };
 
-    // TODO PAT temporary
-    let mut keyboard = KEYBOARD.lock();
-    if let Ok(Some(key_event)) = keyboard.add_byte(scancode) {
-        if let Some(key) = keyboard.process_keyevent(key_event) {
-            match key {
-                pc_keyboard::DecodedKey::Unicode(character) => print!("{}", character),
-                pc_keyboard::DecodedKey::RawKey(key) => print!("{:?}", key),
+    let mut keyboard = KEYBOARD.get().unwrap().lock();
+
+    match keyboard.add_byte(scancode) {
+        Ok(Some(key_event)) => {
+            if let Some(key) = keyboard.process_keyevent(key_event) {
+                use pc_keyboard::DecodedKey::Unicode;
+                match key {
+                    Unicode('\x1b') => print!("ESC"),
+                    Unicode('\x08') => print!("BS"),
+                    Unicode('\x7f') => print!("DEL"),
+                    Unicode('\t') => print!("TAB"), // FIXME: tab not supported in logger?
+                    Unicode(character) => print!("{}", character),
+                    pc_keyboard::DecodedKey::RawKey(key) => print!("RAW[{:?}]", key),
+                }
             }
         }
-    }
-
-    // # Safety
-    // we use the same interrupt number as the handler is registered for
-    unsafe {
-        PICS.get()
-            .unwrap()
-            .lock()
-            .notify_end_of_interrupt(InterruptIndex::Keyboard.into());
+        Ok(None) => {}
+        Err(e) => println!("Keyboard error: {:?}", e),
     }
 }
