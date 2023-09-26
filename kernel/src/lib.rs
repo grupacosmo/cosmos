@@ -4,6 +4,7 @@
 
 use bootloader_api::BootInfo;
 
+pub mod hardware_interrupt;
 pub mod interrupt;
 pub mod logger;
 pub mod vga;
