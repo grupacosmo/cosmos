@@ -278,10 +278,7 @@ extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, _erro
     panic!("Exception: double fault\n{:#?}", frame);
 }
 
-// Hardware handlers - no need for x86-interrupt, already done by the macro at initialization
 extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFrame) {
-    // print!(".");
-
     // # Safety
     // we use the same interrupt number as the handler is registered for
     unsafe {

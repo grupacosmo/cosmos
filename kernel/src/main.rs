@@ -13,15 +13,10 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
 
     println!("it works");
 
-    loop {
-        // halts until next interrupt
-        x86_64::instructions::hlt();
-    }
+    kernel::halt_loop();
 }
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{info}");
-    loop {
-        x86_64::instructions::hlt();
-    }
+    kernel::halt_loop();
 }
