@@ -16,7 +16,7 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
 
     let memory_namager = MEMORY_MANAGER.get().unwrap();
 
-    let region_start = 0x4242_4242_0000_u64;
+    let region_start = VirtAddr::new(0x4242_4242_0000_u64);
 
     memory_namager
         .lock()
@@ -27,12 +27,11 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
         )
         .expect("failed to allocate pages");
 
-    let virt = VirtAddr::new(region_start);
-    let phys = memory_namager.lock().translate_address(virt);
+    let phys = memory_namager.lock().translate_address(region_start);
 
     assert_ne!(phys, None);
 
-    let ptr = region_start as *mut u8;
+    let ptr = region_start.as_u64() as *mut u8;
     unsafe { ptr.write_volatile(0x42) };
     let value = unsafe { ptr.read() };
 

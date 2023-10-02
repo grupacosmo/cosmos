@@ -70,14 +70,14 @@ impl MemoryManager {
     /// ```
     pub fn allocate_frames_for_memory_region(
         &mut self,
-        region_start: u64,
+        region_start: VirtAddr,
         region_size: usize,
         flags: PageTableFlags,
     ) -> Result<(), MapToError<Size4KiB>> {
         // Calculate which pages contain addresses from given memory region
         // and createa range of that pages
         let page_range = {
-            let region_start = VirtAddr::new(region_start as u64);
+            let region_start = VirtAddr::new(region_start.as_u64());
             // Substract 1 to get inclusive bound
             let region_end = region_start + region_size - 1u64;
             let region_start_page = Page::containing_address(region_start);
