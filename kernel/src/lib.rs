@@ -18,4 +18,12 @@ pub fn init(boot_info: &'static mut BootInfo) {
     let vga = vga::Writer::new(framebuffer);
 
     logger::init_global(vga);
+    interrupt::enable_interrupts();
+}
+
+pub fn halt_loop() -> ! {
+    loop {
+        // halts until next interrupt
+        x86_64::instructions::hlt();
+    }
 }
