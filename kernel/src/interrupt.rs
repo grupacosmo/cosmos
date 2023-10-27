@@ -3,8 +3,8 @@ use core::fmt::Debug;
 use pc_keyboard::{HandleControl, Keyboard};
 use pic8259::ChainedPics;
 use spin::once::Once;
-use x86_64::registers::control::Cr2;
 use spin::Mutex;
+use x86_64::registers::control::Cr2;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{
     instructions,
