@@ -36,4 +36,12 @@ pub fn init(boot_info: &'static mut BootInfo) {
     };
 
     memory::init_global(physical_memory_offset, &boot_info.memory_regions);
+    interrupt::enable_interrupts();
+}
+
+pub fn halt_loop() -> ! {
+    loop {
+        // halts until next interrupt
+        x86_64::instructions::hlt();
+    }
 }

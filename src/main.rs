@@ -9,6 +9,9 @@ fn main() -> eyre::Result<()> {
         .arg(format!("format=raw,file={bios_path}"))
         .arg("-boot")
         .arg(format!("menu=on,splash={bootsplash_path},splash-time=1000"))
+        .arg("-no-reboot")
+        .arg("-d")
+        .arg("cpu_reset")
         .spawn()?
         .wait()?;
 

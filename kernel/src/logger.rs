@@ -21,7 +21,10 @@ macro_rules! println {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     use core::fmt::Write;
-    LOGGER.get().unwrap().lock().write_fmt(args).unwrap();
+    // FIXME (temporary solution): disable interrupts while printing
+    x86_64::instructions::interrupts::without_interrupts(|| {
+        LOGGER.get().unwrap().lock().write_fmt(args).unwrap();
+    })
 }
 
 static LOGGER: Once<Mutex<Logger<'static>>> = Once::new();

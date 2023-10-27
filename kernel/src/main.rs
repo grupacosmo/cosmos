@@ -13,12 +13,10 @@ fn main(boot_info: &'static mut BootInfo) -> ! {
 
     println!("it works");
 
-    #[allow(clippy::empty_loop)]
-    loop {}
+    kernel::halt_loop();
 }
-
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{info}");
-    loop {}
+    kernel::halt_loop();
 }
