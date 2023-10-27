@@ -6,6 +6,8 @@ use x86_64::structures::paging::{
 };
 use x86_64::{structures::paging::PageTable, PhysAddr, VirtAddr};
 
+const PAGE_FRAME_SIZE: usize = 4096;
+
 pub static MEMORY_MANAGER: Once<Mutex<MemoryManager>> = Once::new();
 
 /// # Panics
@@ -93,6 +95,11 @@ impl MemoryManager {
                 .ok_or(MapToError::FrameAllocationFailed)?;
 
             // Map page to allocated memory frame
+            // SAFETY
+            // This is safe because we map an unmapped page to USABLE frame.
+            // In case of mapping already mapped paged an apprioriate Error is returned.
+            // This function can't remap pages so it's impossible to cause value invalidation and
+            // provoke UB.
             unsafe {
                 self.mapper
                     .map_to(page, frame, flags, &mut self.frame_allocator)?
@@ -168,15 +175,14 @@ impl BootInfoFrameAllocator {
 
     /// Returns an iterator over the usable frames specified in [`MemoryRegions`].
     fn usable_frames(&self) -> impl Iterator<Item = PhysFrame> {
-        let regions = self.memory_regions.iter();
-        // get usable regions
-        let usable_regions = regions.filter(|r| r.kind == MemoryRegionKind::Usable);
-        // map each region to its address range
-        let addr_ranges = usable_regions.map(|r| r.start..r.end);
-        // transform to an iterator of frame start addresses
-        let frame_addresses = addr_ranges.flat_map(|r| r.step_by(4096));
-        // create `PhysFrame` types from the start addresses
-        frame_addresses.map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
+        self.memory_regions
+            .iter()
+            .filter(|r| r.kind == MemoryRegionKind::Usable)
+            // map each region to its address range
+            .map(|r| r.start..r.end)
+            // transform to an iterator of frame start addresses
+            .flat_map(|r| r.step_by(PAGE_FRAME_SIZE))
+            .map(|addr| PhysFrame::containing_address(PhysAddr::new(addr)))
     }
 }
 
