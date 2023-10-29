@@ -2,9 +2,10 @@
 #![no_main]
 #![feature(abi_x86_interrupt)]
 
+use kernel::BOOTLOADER_CONFIG;
 use test_kernel::prelude::*;
 
-entry_point!(main);
+entry_point!(main, config = &BOOTLOADER_CONFIG);
 
 fn main(boot_info: &'static mut BootInfo) -> ! {
     kernel::init(boot_info);

@@ -4,9 +4,9 @@
 
 use bootloader_api::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use kernel::println;
+use kernel::{println, BOOTLOADER_CONFIG};
 
-entry_point!(main);
+entry_point!(main, config = &BOOTLOADER_CONFIG);
 
 fn main(boot_info: &'static mut BootInfo) -> ! {
     kernel::init(boot_info);

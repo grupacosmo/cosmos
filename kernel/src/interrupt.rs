@@ -4,6 +4,7 @@ use pc_keyboard::{HandleControl, Keyboard};
 use pic8259::ChainedPics;
 use spin::once::Once;
 use spin::Mutex;
+use x86_64::registers::control::Cr2;
 use x86_64::structures::idt::PageFaultErrorCode;
 use x86_64::{
     instructions,
@@ -224,9 +225,16 @@ extern "x86-interrupt" fn breakpoint_handler(frame: InterruptStackFrame) {
 
 extern "x86-interrupt" fn page_fault_handler(
     frame: InterruptStackFrame,
-    _error_code: PageFaultErrorCode,
+    error_code: PageFaultErrorCode,
 ) {
-    panic!("Exception: page fault\n{:#?}", frame)
+    let accessed_addr = Cr2::read();
+
+    panic!(
+        "Exception: page fault\n\
+         Accessed address: {accessed_addr:?}\n\
+         Error code: {error_code:?}\n\
+         {frame:#?}",
+    )
 }
 
 extern "x86-interrupt" fn invalid_tss_handler(frame: InterruptStackFrame, _error_code: u64) {
